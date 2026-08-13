@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -36,7 +35,7 @@ func (r1 *rateLimiter) resetVisitorCount() {
 }
 
 func (r1 *rateLimiter) RateLimitingMiddleware(next http.Handler) http.Handler {
-	fmt.Println("Rate limiting")
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		visitorIP, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {

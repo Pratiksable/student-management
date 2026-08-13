@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"compress/gzip"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -17,7 +16,6 @@ func (g *ZgripResponseWriter) Write(b []byte) (int, error) {
 }
 
 func CompressionMiddleware(next http.Handler) http.Handler {
-	fmt.Println("Compression")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
