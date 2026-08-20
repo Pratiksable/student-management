@@ -9,11 +9,9 @@ import (
 )
 
 func ConnectDB() (*sql.DB, error) {
-	fmt.Println("Trying to connect to DB")
 	USER := os.Getenv("DB_USER")
 	PASSWORD := os.Getenv("DB_PASSWORD")
 
-	// connectionString := "root:root@tcp(127.0.0.1:3306)/" + os.Getenv("DB_NAME")
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", USER, PASSWORD, os.Getenv("HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {

@@ -51,12 +51,14 @@ func main() {
 		CheckBodyOnlyForContentType: "application/x-www-form-urlencoded",
 
 		Whitelist: []string{
-			"sortBy",
+			"sortby",
 			"sortOrder",
 			"first_name",
 			"last_name",
 			"age",
 			"class",
+			"subject",
+			"email",
 		},
 	}
 
