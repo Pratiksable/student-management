@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Pratiksable/student-management/internal/models"
+
 	"github.com/Pratiksable/student-management/pkg/utils"
 )
 
@@ -415,4 +416,51 @@ func DeleteTeachersDBHandler(ids []int) ([]int, error) {
 		return nil, err
 	}
 	return ids, nil
+}
+func GetStudentsByTeacherIDDBHandler(w http.ResponseWriter, teacherId int, students []models.Student) ([]models.Student, bool) {
+	db, err := ConnectDB()
+	if err != nil {
+		return nil, true
+	}
+	defer db.Close()
+
+	query := `SELECT id , first_name , last_name , email , class FROM students WHERE class = (SELECT class FROM teachers WHERE id = ?)`
+	rows, err := db.Query(query, teacherId)
+	if err != nil {
+		return nil, true
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var student models.Student
+		err := rows.Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class)
+		if err != nil {
+			return nil, true
+		}
+		students = append(students, student)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, true
+	}
+	return students, false
+}
+func GetStudentsCountByTeacherIDDBHandler(teacherID int, w http.ResponseWriter) (int, bool) {
+	db, err := ConnectDB()
+	if err != nil {
+		return 0, true
+	}
+	defer db.Close()
+
+	query := `SELECT COUNT(*) FROM students WHERE class = (
+		SELECT class FROM teachers WHERE id = ?
+	)`
+
+	var count int
+	err = db.QueryRow(query, teacherID).Scan(&count)
+	if err != nil {
+		http.Error(w, "Error getting students count", http.StatusInternalServerError)
+		return 0, true
+	}
+	return count, false
 }

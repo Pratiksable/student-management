@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/Pratiksable/student-management/internal/models"
 	sqlconnect "github.com/Pratiksable/student-management/internal/repositories/sql-connect"
@@ -84,11 +86,47 @@ func GetOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 func AddTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 	var newTeachers []models.Teacher
+	var rawTeachers []map[string]json.RawMessage
 
-	err := json.NewDecoder(r.Body).Decode(&newTeachers)
+	err := json.NewDecoder(r.Body).Decode(&rawTeachers)
 	if err != nil {
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
+	}
+
+	val := reflect.TypeOf(models.Teacher{})
+	allowedFields := make(map[string]struct{})
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		key := strings.Split(field.Tag.Get("json"), ",")[0]
+		allowedFields[key] = struct{}{}
+	}
+
+	for _, teacher := range rawTeachers {
+		for key := range teacher {
+			if _, ok := allowedFields[key]; !ok {
+				http.Error(w, "Unacceptable fields found in request. Only use allowed fields", http.StatusBadRequest)
+				return
+			}
+		}
+	}
+	data, err := json.Marshal(rawTeachers)
+	if err != nil {
+		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		return
+	}
+	if err := json.Unmarshal(data, &newTeachers); err != nil {
+		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		return
+	}
+	for _, teacher := range newTeachers {
+		val := reflect.ValueOf(teacher)
+		for i := 0; i < val.NumField(); i++ {
+			if val.Field(i).Kind() == reflect.String && val.Field(i).String() == "" {
+				http.Error(w, "All fields are required", http.StatusBadRequest)
+				return
+			}
+		}
 	}
 
 	addedTeacher, err := sqlconnect.AddTeachersDBHandler(newTeachers)
@@ -239,6 +277,63 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		Count:      len(deletedIds),
 		DeletedIDs: deletedIds,
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+func GetStudentsByTeacherID(w http.ResponseWriter, r *http.Request) {
+	teacheridstr := r.PathValue("id")
+	teacherId, err := strconv.Atoi(teacheridstr)
+	if err != nil {
+		http.Error(w, "Invalid teacher ID", http.StatusBadRequest)
+		return
+	}
+	var students []models.Student
+
+	students, shouldReturn := sqlconnect.GetStudentsByTeacherIDDBHandler(w, teacherId, students)
+	if shouldReturn {
+		return
+	}
+
+	response := struct {
+		Status string           `json:"status"`
+		Count  int              `json:"count"`
+		Data   []models.Student `json:"data"`
+	}{
+		Status: "success",
+		Count:  len((students)),
+		Data:   students,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func GetStudentsCountByTeacherID(w http.ResponseWriter, r *http.Request) {
+	teacherStrId := r.PathValue("id")
+	teacherID, err := strconv.Atoi(teacherStrId)
+	if err != nil {
+		return
+	}
+
+	count, shouldReturn := sqlconnect.GetStudentsCountByTeacherIDDBHandler(teacherID, w)
+	if shouldReturn {
+		return
+	}
+
+	response := struct {
+		Status       string `json:"status"`
+		TeacherID    int    `json:"teacher_id"`
+		StudentCount int    `json:"student_count"`
+	}{
+		Status:       "success",
+		TeacherID:    teacherID,
+		StudentCount: count,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
