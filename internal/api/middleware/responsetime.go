@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -17,7 +16,6 @@ func (rw *responseWriter) WriteHeader(code int) {
 }
 
 func ResponseTimeMiddleware(next http.Handler) http.Handler {
-	fmt.Println("ResponseTime")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		start := time.Now()

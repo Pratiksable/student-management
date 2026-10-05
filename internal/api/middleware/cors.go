@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -12,7 +11,6 @@ var allowedOrigins = []string{
 }
 
 func CORS(next http.Handler) http.Handler {
-	fmt.Println("CORS")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")

@@ -5,15 +5,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Pratiksable/student-management/internal/api/middleware"
 	"github.com/Pratiksable/student-management/internal/api/router"
+	sqlconnect "github.com/Pratiksable/student-management/internal/repositories/sql-connect"
+	"github.com/joho/godotenv"
 )
 
-var PORT = "3000"
-
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		return
+	}
+
+	var PORT = os.Getenv("SERVER_PORT")
+
+	_, error := sqlconnect.ConnectDB()
+	if error != nil {
+		fmt.Println("Error: ", error)
+		return
+	}
 
 	// TLS certificate files
 	cert := "cert.pem"
@@ -38,12 +51,14 @@ func main() {
 		CheckBodyOnlyForContentType: "application/x-www-form-urlencoded",
 
 		Whitelist: []string{
-			"sortBy",
+			"sortby",
 			"sortOrder",
 			"first_name",
 			"last_name",
 			"age",
 			"class",
+			"subject",
+			"email",
 		},
 	}
 
@@ -91,7 +106,7 @@ func main() {
 
 	fmt.Println("Server is running on port", PORT)
 
-	err := server.ListenAndServeTLS(cert, key)
+	err = server.ListenAndServeTLS(cert, key)
 
 	if err != nil {
 		log.Fatal("Error starting the server: ", err)
