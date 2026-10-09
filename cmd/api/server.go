@@ -66,7 +66,7 @@ func main() {
 	// Middleware chain
 	// -----------------------------
 
-	var handler http.Handler = router.Router()
+	var handler http.Handler = router.MainRouter()
 
 	// Closest to route handler
 	handler = middleware.CompressionMiddleware(handler)

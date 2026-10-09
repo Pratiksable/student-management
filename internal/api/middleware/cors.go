@@ -24,6 +24,13 @@ func CORS(next http.Handler) http.Handler {
 		}
 		origin := r.Header.Get("Origin")
 
+		// Non-browser API clients (for example Insomnia and curl) do not send
+		// Origin. CORS does not apply to those requests, so let them through.
+		if origin == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		if isOriginALlowed(origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 
