@@ -49,7 +49,7 @@ func GetMultipleStudentHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := struct {
 		Status string           `json:"status"`
-		Count  int              `json:""count"`
+		Count  int              `json:"count"`
 		Data   []models.Student `json:"data"`
 	}{
 		Status: "success",
